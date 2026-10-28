@@ -34,7 +34,7 @@ jobs:
         Set-Content -Path "${{ github.workspace }}/FetchReferences.csproj" -Value $csprojContent
         dotnet restore "${{ github.workspace }}/FetchReferences.csproj"
 
-    - name: Bind Harmony and Verify references
+    - name: Execute Mod Compilation Script
       shell: pwsh
       run: |
         # 1. Locate the downloaded Harmony reference from the NuGet cache
@@ -46,26 +46,12 @@ jobs:
         if ($null -eq $scriptFile) {
             throw "Could not find build.ps1 anywhere in the repository workspace!"
         }
-        $scriptPath = $scriptFile.FullName
         
-        # 3. Read build script contents
-        $scriptContent = Get-Content -Path $scriptPath -Raw
-        
-        # 4. Dynamically route the script's $harmony path to the GitHub runner package path
-        $scriptContent = $scriptContent -replace '\$harmony\s*=\s*.*', "`$harmony = '$harmonyRefPath'"
-        
-        Set-Content -Path $scriptPath -Value $scriptContent
-        Write-Host "Locked script environment references successfully."
-
-    - name: Execute Mod Compilation Script
-      shell: pwsh
-      run: |
-        $scriptFile = Get-ChildItem -Path "${{ github.workspace }}" -Filter "build.ps1" -Recurse | Select-Object -First 1
-        
-        # Move into the script's actual directory context so target output placements match
         Set-Location $scriptFile.DirectoryName
         Write-Host "Executing build script in directory: $($scriptFile.DirectoryName)"
         
+        # 3. Inject Harmony path directly as a variable scope runtime parameter injection override
+        $harmony = $harmonyRefPath
         & $scriptFile.FullName
 
     - name: Upload Compiled DLL Artifact
