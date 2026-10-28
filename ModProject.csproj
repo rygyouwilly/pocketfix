@@ -8,6 +8,9 @@
     <AssemblyName>PocketMapShuttleLaunchFix</AssemblyName>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>Assemblies\</OutputPath>
+    
+    <!-- FIX: Disables automatic generation to favor your Properties/AssemblyInfo.cs file -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,15 +21,15 @@
   <ItemGroup>
     <!-- Bind your local game reference dependencies directly to the compiler pipeline -->
     <Reference Include="Assembly-CSharp">
-      <HintLocation>References\Assembly-CSharp.dll</HintLocation>
+      <HintPath>References\Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Waylith">
-      <HintLocation>References\Waylith.dll</HintLocation>
+      <HintPath>References\Waylith.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityStubs">
-      <HintLocation>References\UnityStubs.dll</HintLocation>
+      <HintPath>References\UnityStubs.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
