@@ -50,9 +50,8 @@ jobs:
         Set-Location $scriptFile.DirectoryName
         Write-Host "Executing build script in directory: $($scriptFile.DirectoryName)"
         
-        # 3. Inject Harmony path directly as a variable scope runtime parameter injection override
-        $harmony = $harmonyRefPath
-        & $scriptFile.FullName
+        # 3. Call the build script passing the Harmony dependency parameter explicitly
+        & $scriptFile.FullName -harmony "$harmonyRefPath"
 
     - name: Upload Compiled DLL Artifact
       uses: actions/upload-artifact@v4
