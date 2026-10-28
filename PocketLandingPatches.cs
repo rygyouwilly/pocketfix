@@ -262,42 +262,46 @@ namespace PocketMapShuttleLaunchFix
                 Find.World != null &&
                 Find.World.pocketMaps.Contains(pocketParent);
             Map map = parentRegistered && pocketParent.HasMap ? pocketParent.Map : null;
-bool mapLoaded = map != null && Current.Game != null && Current.Game.Maps.Contains(map);
-PlanetTile resolvedTile;
-string failure;
-bool resolved = mapLoaded &&
-PocketMapOriginResolver.TryResolvePocketOrigin(map, out resolvedTile, out failure) &&
-resolvedTile == surfaceTile;
-bool destinationMatches = destinationTile == surfaceTile;
-bool canLand = parentRegistered && mapLoaded &&
-TransportersArrivalAction_LandInSpecificCell.CanLandInSpecificCell(pods, pocketParent);
-bool valid = parentRegistered && mapLoaded && resolved && destinationMatches && canLand;
-Log.Message("[PocketMapShuttleLaunchFix] Pocket landing validation: valid=" + valid +
-", parentRegistered=" + parentRegistered +
-", mapLoaded=" + mapLoaded +
-", resolved=" + resolved +
-", destinationMatches=" + destinationMatches +
-", canLand=" + canLand + ".");
-return valid;
-}
-public override void Arrived(List transporters, PlanetTile destinationTile)
-{
-ExplicitPocketArrivalScope.Enter();
-try
-{
-Log.Message("[PocketMapShuttleLaunchFix] Preserving PocketMapParent through ShipJob_Arrive for explicit underground landing.");
-base.Arrived(transporters, destinationTile);
-}
-finally
-{
-ExplicitPocketArrivalScope.Exit();
-}
-}
-public override void ExposeData()
-{
-base.ExposeData();
-Scribe_References.Look(ref pocketParent, "pocketMapParent");
-Scribe_Values.Look(ref surfaceTile, "surfaceTile", PlanetTile.Invalid);
-}
-}
+            bool mapLoaded = map != null && Current.Game != null && Current.Game.Maps.Contains(map);
+
+            PlanetTile resolvedTile;
+            string failure;
+            bool resolved = mapLoaded &&
+                PocketMapOriginResolver.TryResolvePocketOrigin(map, out resolvedTile, out failure) &&
+                resolvedTile == surfaceTile;
+            bool destinationMatches = destinationTile == surfaceTile;
+            bool canLand = parentRegistered && mapLoaded &&
+                TransportersArrivalAction_LandInSpecificCell.CanLandInSpecificCell(pods, pocketParent);
+            bool valid = parentRegistered && mapLoaded && resolved && destinationMatches && canLand;
+
+            Log.Message("[PocketMapShuttleLaunchFix] Pocket landing validation: valid=" + valid +
+                ", parentRegistered=" + parentRegistered +
+                ", mapLoaded=" + mapLoaded +
+                ", resolved=" + resolved +
+                ", destinationMatches=" + destinationMatches +
+                ", canLand=" + canLand + ".");
+            return valid;
+        }
+
+        public override void Arrived(List<ActiveTransporterInfo> transporters, PlanetTile destinationTile)
+        {
+            ExplicitPocketArrivalScope.Enter();
+            try
+            {
+                Log.Message("[PocketMapShuttleLaunchFix] Preserving PocketMapParent through ShipJob_Arrive for explicit underground landing.");
+                base.Arrived(transporters, destinationTile);
+            }
+            finally
+            {
+                ExplicitPocketArrivalScope.Exit();
+            }
+        }
+
+        public override void ExposeData()
+        {
+            base.ExposeData();
+            Scribe_References.Look(ref pocketParent, "pocketMapParent");
+            Scribe_Values.Look(ref surfaceTile, "surfaceTile", PlanetTile.Invalid);
+        }
+    }
 }
