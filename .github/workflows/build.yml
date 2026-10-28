@@ -1,4 +1,4 @@
-name: Build Waylith Mod Assembly
+name: Build Modern Waylith Mod Assembly
 
 on:
   push:
@@ -15,49 +15,21 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x' # Forces the runner to initialize the modern .NET 10 runtime
 
-    - name: Install Harmony Reference Assembly
+    - name: Compile Mod via SDK Engine
       shell: pwsh
       run: |
-        $csprojContent = @"
-        <Project Sdk="Microsoft.NET.Sdk">
-          <PropertyGroup>
-            <TargetFramework>net48</TargetFramework>
-          </PropertyGroup>
-          <ItemGroup>
-            <PackageReference Include="Lib.Harmony" Version="2.3.3" />
-          </ItemGroup>
-        </Project>
-        "@
-        Set-Content -Path "${{ github.workspace }}/FetchReferences.csproj" -Value $csprojContent
-        dotnet restore "${{ github.workspace }}/FetchReferences.csproj"
-
-    - name: Execute Mod Compilation Script
-      shell: pwsh
-      run: |
-        # 1. Locate the downloaded Harmony reference from the NuGet cache
-        $nugetCache = Join-Path $env:USERPROFILE ".nuget\packages"
-        $harmonyRefPath = Resolve-Path (Join-Path $nugetCache "lib.harmony\*\lib\net48\0Harmony.dll") | Select-Object -First 1
+        dotnet build ModProject.csproj --configuration Release
         
-        # 2. Find build.ps1 in the workspace
-        $scriptFile = Get-ChildItem -Path "${{ github.workspace }}" -Filter "build.ps1" -Recurse | Select-Object -First 1
-        if ($null -eq $scriptFile) {
-            throw "Could not find build.ps1 anywhere in the repository workspace!"
-        }
-        
-        Set-Location $scriptFile.DirectoryName
-        Write-Host "Executing build script in directory: $($scriptFile.DirectoryName)"
-        
-        # 3. Call the build script passing the Harmony dependency parameter explicitly
-        & $scriptFile.FullName -harmony "$harmonyRefPath"
-
     - name: Upload Compiled DLL Artifact
       uses: actions/upload-artifact@v4
       with:
         name: PocketMapShuttleLaunchFix-Assembly
         path: |
           **/Assemblies/PocketMapShuttleLaunchFix.dll
-          **/BuildOutput/PocketMapShuttleLaunchFix.dll
+          **/bin/Release/**/*.dll
         if-no-files-found: error
