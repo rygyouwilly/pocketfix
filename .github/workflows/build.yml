@@ -1,0 +1,78 @@
+name: Build Waylith Mod Assembly
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-mod:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+
+    - name: Install Harmony Reference Assembly
+      shell: pwsh
+      run: |
+        $csprojContent = @"
+        <Project Sdk="Microsoft.NET.Sdk">
+          <PropertyGroup>
+            <TargetFramework>net48</TargetFramework>
+          </PropertyGroup>
+          <ItemGroup>
+            <PackageReference Include="Lib.Harmony" Version="2.3.3" />
+          </ItemGroup>
+        </Project>
+        "@
+        Set-Content -Path "${{ github.workspace }}/FetchReferences.csproj" -Value $csprojContent
+        dotnet restore "${{ github.workspace }}/FetchReferences.csproj"
+
+    - name: Bind Harmony and Verify references
+      shell: pwsh
+      run: |
+        # 1. Locate the downloaded Harmony reference from the NuGet cache
+        $nugetCache = Join-Path $env:USERPROFILE ".nuget\packages"
+        $harmonyRefPath = Resolve-Path (Join-Path $nugetCache "lib.harmony\*\lib\net48\0Harmony.dll") | Select-Object -First 1
+        
+        # 2. Find build.ps1 in the workspace
+        $scriptFile = Get-ChildItem -Path "${{ github.workspace }}" -Filter "build.ps1" -Recurse | Select-Object -First 1
+        if ($null -eq $scriptFile) {
+            throw "Could not find build.ps1 anywhere in the repository workspace!"
+        }
+        $scriptPath = $scriptFile.FullName
+        
+        # 3. Read build script contents
+        $scriptContent = Get-Content -Path $scriptPath -Raw
+        
+        # 4. Dynamically route the script's $harmony path to the GitHub runner package path
+        $scriptContent = $scriptContent -replace '\$harmony\s*=\s*.*', "`$harmony = '$harmonyRefPath'"
+        
+        Set-Content -Path $scriptPath -Value $scriptContent
+        Write-Host "Locked script environment references successfully."
+
+    - name: Execute Mod Compilation Script
+      shell: pwsh
+      run: |
+        $scriptFile = Get-ChildItem -Path "${{ github.workspace }}" -Filter "build.ps1" -Recurse | Select-Object -First 1
+        
+        # Move into the script's actual directory context so target output placements match
+        Set-Location $scriptFile.DirectoryName
+        Write-Host "Executing build script in directory: $($scriptFile.DirectoryName)"
+        
+        & $scriptFile.FullName
+
+    - name: Upload Compiled DLL Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PocketMapShuttleLaunchFix-Assembly
+        path: |
+          **/Assemblies/PocketMapShuttleLaunchFix.dll
+          **/BuildOutput/PocketMapShuttleLaunchFix.dll
+        if-no-files-found: error
