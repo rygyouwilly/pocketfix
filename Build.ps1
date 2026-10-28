@@ -44,7 +44,6 @@ if (Test-Path (Join-Path $localRefDir 'Assembly-CSharp.dll')) {
 }
 
 # 2. Add the validated Harmony library path
-Write-Host "Using Harmony assembly path: $harmony"
 $compilerArgs += ('/reference:' + $harmony)
 
 # 3. Add explicit code assets
@@ -57,8 +56,10 @@ $compilerArgs += @(
     (Join-Path $sourceRoot 'Properties\AssemblyInfo.cs')
 )
 
-& $compiler $compilerArgs
+# Run compiler and pipe both stdout and stderr straight into the action console log
+Write-Host "Invoking C# Compiler..."
+& $compiler $compilerArgs 2>&1 | ForEach-Object { Write-Host $_ }
 
 if ($LASTEXITCODE -ne 0) {
-    throw "C# compiler exited with code $LASTEXITCODE."
+    throw "C# compiler failed with exit code $LASTEXITCODE. Review the detailed log above for missing types or syntax issues."
 }
