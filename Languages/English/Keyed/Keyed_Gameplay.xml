@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+  <!-- Insect Lair Dropdown Labels -->
+  <PocketMapShuttleLaunchFix_LandInInsectLair>Land in insect lair</PocketMapShuttleLaunchFix_LandInInsectLair>
+  <PocketMapShuttleLaunchFix_LandInInsectLairNumbered>Land in insect lair #{0}</PocketMapShuttleLaunchFix_LandInInsectLairNumbered>
+
+  <!-- Ancient Stockpile Dropdown Labels (For Reference) -->
+  <PocketMapShuttleLaunchFix_LandInAncientStockpile>Land in ancient stockpile</PocketMapShuttleLaunchFix_LandInAncientStockpile>
+  <PocketMapShuttleLaunchFix_LandInAncientStockpileNumbered>Land in ancient stockpile #{0}</PocketMapShuttleLaunchFix_LandInAncientStockpileNumbered>
+
+  <!-- Fallback/Error Messages -->
+  <PocketMapShuttleLaunchFix_CannotResolveOrigin>Cannot launch shuttle: {0}</PocketMapShuttleLaunchFix_CannotResolveOrigin>
+  <PocketMapShuttleLaunchFix_LeavingFallback>Pocket-map origin unavailable; using fallback tile.</PocketMapShuttleLaunchFix_LeavingFallback>
+
+</LanguageData>
