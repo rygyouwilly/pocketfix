@@ -133,7 +133,7 @@ namespace PocketMapShuttleLaunchFix
                 yield break;
             }
 
-            List<PocketMapParent> candidates = FindAncientStockpiles(destinationTile);
+            List<PocketMapParent> candidates = FindTargetPocketMaps(destinationTile);
             if (candidates.Count == 0)
             {
                 yield break;
@@ -158,7 +158,7 @@ namespace PocketMapShuttleLaunchFix
                         arrivalAction as TransportersArrivalAction_LandInSpecificCell;
                     if (landing == null)
                     {
-                        Log.Error("[PocketMapShuttleLaunchFix] Ancient Stockpile landing did not produce a LandInSpecificCell action; launch was cancelled safely.");
+                        Log.Error("[PocketMapShuttleLaunchFix] Pocket Map landing did not produce a LandInSpecificCell action; launch was cancelled safely.");
                         return;
                     }
 
@@ -175,17 +175,29 @@ namespace PocketMapShuttleLaunchFix
                     launchAction(destinationTile, pocketAction);
                 };
 
+                string mapDefName = pocketParent.MapGeneratorDef?.defName;
+                bool isInsectLair = mapDefName == "InsectLair";
+
                 foreach (FloatMenuOption option in pocketParent.GetShuttleFloatMenuOptions(transporters, resolvedLaunch))
                 {
-                    option.Label = candidates.Count == 1
-                        ? "PocketMapShuttleLaunchFix_LandInAncientStockpile".Translate()
-                        : "PocketMapShuttleLaunchFix_LandInAncientStockpileNumbered".Translate(i + 1);
+                    if (isInsectLair)
+                    {
+                        option.Label = candidates.Count == 1
+                            ? "PocketMapShuttleLaunchFix_LandInInsectLair".Translate()
+                            : "PocketMapShuttleLaunchFix_LandInInsectLairNumbered".Translate(i + 1);
+                    }
+                    else
+                    {
+                        option.Label = candidates.Count == 1
+                            ? "PocketMapShuttleLaunchFix_LandInAncientStockpile".Translate()
+                            : "PocketMapShuttleLaunchFix_LandInAncientStockpileNumbered".Translate(i + 1);
+                    }
                     yield return option;
                 }
             }
         }
 
-        private static List<PocketMapParent> FindAncientStockpiles(PlanetTile destinationTile)
+        private static List<PocketMapParent> FindTargetPocketMaps(PlanetTile destinationTile)
         {
             List<PocketMapParent> result = new List<PocketMapParent>();
             List<Map> maps = Current.Game.Maps;
@@ -198,8 +210,13 @@ namespace PocketMapShuttleLaunchFix
                 }
 
                 PocketMapParent parent = map.PocketMapParent;
-                if (parent == null || parent.MapGeneratorDef == null ||
-                    parent.MapGeneratorDef.defName != "AncientStockpile")
+                if (parent == null || parent.MapGeneratorDef == null)
+                {
+                    continue;
+                }
+
+                string defName = parent.MapGeneratorDef.defName;
+                if (defName != "AncientStockpile" && defName != "InsectLair")
                 {
                     continue;
                 }
@@ -245,46 +262,42 @@ namespace PocketMapShuttleLaunchFix
                 Find.World != null &&
                 Find.World.pocketMaps.Contains(pocketParent);
             Map map = parentRegistered && pocketParent.HasMap ? pocketParent.Map : null;
-            bool mapLoaded = map != null && Current.Game != null && Current.Game.Maps.Contains(map);
-
-            PlanetTile resolvedTile;
-            string failure;
-            bool resolved = mapLoaded &&
-                PocketMapOriginResolver.TryResolvePocketOrigin(map, out resolvedTile, out failure) &&
-                resolvedTile == surfaceTile;
-            bool destinationMatches = destinationTile == surfaceTile;
-            bool canLand = parentRegistered && mapLoaded &&
-                TransportersArrivalAction_LandInSpecificCell.CanLandInSpecificCell(pods, pocketParent);
-            bool valid = parentRegistered && mapLoaded && resolved && destinationMatches && canLand;
-
-            Log.Message("[PocketMapShuttleLaunchFix] Pocket landing validation: valid=" + valid +
-                ", parentRegistered=" + parentRegistered +
-                ", mapLoaded=" + mapLoaded +
-                ", resolved=" + resolved +
-                ", destinationMatches=" + destinationMatches +
-                ", canLand=" + canLand + ".");
-            return valid;
-        }
-
-        public override void Arrived(List<ActiveTransporterInfo> transporters, PlanetTile destinationTile)
-        {
-            ExplicitPocketArrivalScope.Enter();
-            try
-            {
-                Log.Message("[PocketMapShuttleLaunchFix] Preserving PocketMapParent through ShipJob_Arrive for explicit underground landing.");
-                base.Arrived(transporters, destinationTile);
-            }
-            finally
-            {
-                ExplicitPocketArrivalScope.Exit();
-            }
-        }
-
-        public override void ExposeData()
-        {
-            base.ExposeData();
-            Scribe_References.Look(ref pocketParent, "pocketMapParent");
-            Scribe_Values.Look(ref surfaceTile, "surfaceTile", PlanetTile.Invalid);
-        }
-    }
+bool mapLoaded = map != null && Current.Game != null && Current.Game.Maps.Contains(map);
+PlanetTile resolvedTile;
+string failure;
+bool resolved = mapLoaded &&
+PocketMapOriginResolver.TryResolvePocketOrigin(map, out resolvedTile, out failure) &&
+resolvedTile == surfaceTile;
+bool destinationMatches = destinationTile == surfaceTile;
+bool canLand = parentRegistered && mapLoaded &&
+TransportersArrivalAction_LandInSpecificCell.CanLandInSpecificCell(pods, pocketParent);
+bool valid = parentRegistered && mapLoaded && resolved && destinationMatches && canLand;
+Log.Message("[PocketMapShuttleLaunchFix] Pocket landing validation: valid=" + valid +
+", parentRegistered=" + parentRegistered +
+", mapLoaded=" + mapLoaded +
+", resolved=" + resolved +
+", destinationMatches=" + destinationMatches +
+", canLand=" + canLand + ".");
+return valid;
+}
+public override void Arrived(List transporters, PlanetTile destinationTile)
+{
+ExplicitPocketArrivalScope.Enter();
+try
+{
+Log.Message("[PocketMapShuttleLaunchFix] Preserving PocketMapParent through ShipJob_Arrive for explicit underground landing.");
+base.Arrived(transporters, destinationTile);
+}
+finally
+{
+ExplicitPocketArrivalScope.Exit();
+}
+}
+public override void ExposeData()
+{
+base.ExposeData();
+Scribe_References.Look(ref pocketParent, "pocketMapParent");
+Scribe_Values.Look(ref surfaceTile, "surfaceTile", PlanetTile.Invalid);
+}
+}
 }
