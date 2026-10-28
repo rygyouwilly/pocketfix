@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Configures the project to use the core .NET 10 runtime engine -->
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>PocketMapShuttleLaunchFix</RootNamespace>
+    <AssemblyName>PocketMapShuttleLaunchFix</AssemblyName>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>Assemblies\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Fetch the modern Lib.Harmony assembly safely from the cloud -->
+    <PackageReference Include="Lib.Harmony" Version="2.3.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bind your local game reference dependencies directly to the compiler pipeline -->
+    <Reference Include="Assembly-CSharp">
+      <HintLocation>References\Assembly-CSharp.dll</HintLocation>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Waylith">
+      <HintLocation>References\Waylith.dll</HintLocation>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityStubs">
+      <HintLocation>References\UnityStubs.dll</HintLocation>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
