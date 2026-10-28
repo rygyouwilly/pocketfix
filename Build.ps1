@@ -1,4 +1,7 @@
-param([switch]$StageOnly)
+param(
+    [switch]$StageOnly,
+    [string]$harmony = 'D:\SteamLibrary\steamapps\workshop\content\294100\2009463077\Current\Assemblies\0Harmony.dll'
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -28,13 +31,11 @@ $compilerArgs = @(
 )
 
 if (Test-Path (Join-Path $localRefDir 'Assembly-CSharp.dll')) {
-    # ENVIRONMENT A: Running on GitHub Actions runner or local repo using option A layout
     Write-Host "Compiling using detached localized References folder."
     $compilerArgs += ('/reference:' + (Join-Path $localRefDir 'Assembly-CSharp.dll'))
     $compilerArgs += ('/reference:' + (Join-Path $localRefDir 'Waylith.dll'))
     $compilerArgs += ('/reference:' + (Join-Path $localRefDir 'UnityStubs.dll'))
 } else {
-    # ENVIRONMENT B: Running on your absolute local PC path fallback configuration
     Write-Host "References folder not found. Compiling via standard hardcoded disk locations."
     $fallbackRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
     $compilerArgs += ('/reference:' + (Join-Path $fallbackRoot 'RimWorldWin64_Data\Managed\Assembly-CSharp.dll'))
@@ -42,7 +43,8 @@ if (Test-Path (Join-Path $localRefDir 'Assembly-CSharp.dll')) {
     $compilerArgs += ('/reference:' + (Join-Path $fallbackRoot 'RimWorldWin64_Data\Managed\Unity.Mathematics.dll'))
 }
 
-# 2. Add the dynamic Harmony path provided via script variable tracking
+# 2. Add the validated Harmony library path
+Write-Host "Using Harmony assembly path: $harmony"
 $compilerArgs += ('/reference:' + $harmony)
 
 # 3. Add explicit code assets
